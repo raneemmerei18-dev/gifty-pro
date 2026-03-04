@@ -927,6 +927,22 @@ input::placeholder {
   border-color: var(--primary) !important;
 }
 
+.cart-giftbox-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  background: linear-gradient(135deg, #fff8ee, #fff3e0);
+  border: 1.5px solid #f39c12;
+  border-radius: var(--radius-md);
+  margin-bottom: 0.8rem;
+}
+.cgb-icon  { font-size: 1.6rem; flex-shrink: 0; }
+.cgb-info  { display: flex; flex-direction: column; flex: 1; }
+.cgb-name  { font-weight: 700; font-size: 0.95rem; color: var(--text); }
+.cgb-tag   { font-size: 0.72rem; color: #f39c12; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.cgb-price { font-size: 1rem; font-weight: 800; color: #e67e22; white-space: nowrap; }
+
 .cart-summary {
   margin-top: 2rem;
   padding-top: 1.5rem;

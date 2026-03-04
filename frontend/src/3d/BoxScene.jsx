@@ -80,35 +80,53 @@ function SafeModel({ path, scale, position }) {
     </group>
   );
 }
-function DragGhost({ data, onDrop }) {
-  const groupRef = useRef();
+function DragGhost({ data, onDrop, onCancel }) {
+  const groupRef      = useRef();
   const { raycaster } = useThree();
+  const hasMoved      = useRef(false);
+  // initialise startXY from the coords captured at the original mousedown
+  const startXY       = useRef(
+    data._startX != null ? { x: data._startX, y: data._startY } : null
+  );
 
   useFrame(() => {
-    // نحدد أرضية وهمية ليرتطم بها الـ Raycaster دائماً عند مستوى الصفر
     const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-    const targetPos = new THREE.Vector3();
-    
-    // نجبر الـ Raycaster على تجاهل كل الأجسام والتركيز فقط على مستوى الأرض
+    const targetPos  = new THREE.Vector3();
     raycaster.ray.intersectPlane(floorPlane, targetPos);
-    
     if (groupRef.current) {
-      // نضع الـ Y على 0.05 ليكون فوق الأرض قليلاً أثناء السحب
       groupRef.current.position.set(targetPos.x, 0.05, targetPos.z);
     }
   });
 
   useEffect(() => {
-    const handleUp = () => {
-      if (groupRef.current) {
-        // نرسل الموقع النهائي بدقة
-        const finalPosition = groupRef.current.position.toArray();
-        onDrop(finalPosition);
+    hasMoved.current = false;
+
+    const handleMove = (e) => {
+      if (!hasMoved.current) {
+        if (!startXY.current) {
+          // first move event — use this as the reference point
+          startXY.current = { x: e.clientX, y: e.clientY };
+        } else {
+          const dx = e.clientX - startXY.current.x;
+          const dy = e.clientY - startXY.current.y;
+          if (Math.hypot(dx, dy) > 6) hasMoved.current = true;
+        }
       }
     };
-    window.addEventListener("mouseup", handleUp);
-    return () => window.removeEventListener("mouseup", handleUp);
-  }, [onDrop]);
+    const handleUp = () => {
+      if (hasMoved.current && groupRef.current) {
+        onDrop(groupRef.current.position.toArray());
+      } else {
+        onCancel();
+      }
+    };
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup",   handleUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup",   handleUp);
+    };
+  }, [onDrop, onCancel]);
 
   return (
     <group ref={groupRef}>
@@ -145,6 +163,18 @@ export function BoxScene({ activeBox, setActiveBox, items, setItemsInScene, drag
     setDraggedItem(null);
   };
 
+  // called when user clicks without dragging — restore the item to where it was
+  const cancelDrop = () => {
+    if (!draggedItem) return;
+    if (draggedItem.pos !== undefined) {
+      // item was grabbed from the scene — put it back
+      if (draggedItem.isBox) setActiveBox(draggedItem);
+      else setItemsInScene(prev => [...prev, draggedItem]);
+    }
+    // if no pos it was a fresh drag from sidebar — just discard
+    setDraggedItem(null);
+  };
+
   return (
     <div style={{ width: "100%", height: "100%", background: "#111" }}>
       <Canvas shadows camera={{ position: [8, 8, 8], fov: 45 }}>
@@ -160,7 +190,7 @@ export function BoxScene({ activeBox, setActiveBox, items, setItemsInScene, drag
                 <group
                   onPointerDown={(e) => {
                     e.stopPropagation();
-                    if (onGrab) onGrab({ ...activeBox, isBox: true });
+                    if (onGrab) onGrab({ ...activeBox, isBox: true, _startX: e.nativeEvent.clientX, _startY: e.nativeEvent.clientY });
                   }}
                 >
                   <SafeModel path={activeBox.modelPath} scale={activeBox.scale} position={activeBox.pos || [0,0,0]} />
@@ -170,7 +200,7 @@ export function BoxScene({ activeBox, setActiveBox, items, setItemsInScene, drag
               <mesh
                 position={activeBox.pos || [0, 0, 0]}
                 receiveShadow
-                onPointerDown={(e) => { e.stopPropagation(); if (onGrab) onGrab({ ...activeBox, isBox: true }); }}
+                onPointerDown={(e) => { e.stopPropagation(); if (onGrab) onGrab({ ...activeBox, isBox: true, _startX: e.nativeEvent.clientX, _startY: e.nativeEvent.clientY }); }}
               >
                 <boxGeometry args={[activeBox.size[0], 0.1, activeBox.size[2]]} />
                 <meshStandardMaterial color={activeBox.color} />
@@ -184,7 +214,7 @@ export function BoxScene({ activeBox, setActiveBox, items, setItemsInScene, drag
               <group
                 onPointerDown={(e) => {
                   e.stopPropagation();
-                  if (onGrab) onGrab({ ...it });
+                  if (onGrab) onGrab({ ...it, _startX: e.nativeEvent.clientX, _startY: e.nativeEvent.clientY });
                 }}
               >
                 {it.isBox ? (
@@ -207,7 +237,7 @@ export function BoxScene({ activeBox, setActiveBox, items, setItemsInScene, drag
             </Suspense>
           ))}
 
-          {draggedItem && <DragGhost data={draggedItem} onDrop={finalizeDrop} />}
+          {draggedItem && <DragGhost data={draggedItem} onDrop={finalizeDrop} onCancel={cancelDrop} />}
           
           <ContactShadows position={[0, 0.01, 0]} opacity={0.5} scale={10} blur={2} />
           <Environment preset="city" />

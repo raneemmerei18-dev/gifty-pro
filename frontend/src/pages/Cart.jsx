@@ -31,17 +31,35 @@ export default function Cart() {
         <div className="cart-list">
           <h2>Your Cart</h2>
 
-          {cart.items?.length === 0 ? (
+          {cart.items?.length === 0 && !cart.giftBox ? (
             <p className="muted">
               Your cart is empty. <Link to="/products">Browse gifts</Link>
             </p>
           ) : (
             <>
+              {/* Gift box row */}
+              {cart.giftBox && (
+                <div className="cart-giftbox-row">
+                  <span className="cgb-icon">📦</span>
+                  <div className="cgb-info">
+                    <span className="cgb-name">{cart.giftBox.name}</span>
+                    <span className="cgb-tag">Gift Box</span>
+                  </div>
+                  <span className="cgb-price">${(cart.giftBox.basePrice || 0).toFixed(2)}</span>
+                </div>
+              )}
+
               {cart.items.map((item) => (
                 <CartItem key={item._id} item={item} />
               ))}
 
               <div className="cart-summary">
+                {cart.giftBox && (
+                  <p className="total" style={{ fontSize: "0.88rem", color: "var(--text-muted)", marginBottom: "2px" }}>
+                    Items: <strong>${(totalPrice - (cart.giftBox?.basePrice || 0)).toFixed(2)}</strong>
+                    &nbsp;&nbsp;Box: <strong>${(cart.giftBox?.basePrice || 0).toFixed(2)}</strong>
+                  </p>
+                )}
                 <p className="total">
                   Total: <strong>${totalPrice.toFixed(2)}</strong>
                 </p>

@@ -56,9 +56,10 @@ export function CartProvider({ children }) {
 
   // Computed values
   const itemCount  = cart.items?.reduce((sum, i) => sum + i.quantity, 0) || 0;
-  const totalPrice = cart.items?.reduce(
+  const itemsTotal = cart.items?.reduce(
     (sum, i) => sum + (i.product?.price || 0) * i.quantity, 0
   ) || 0;
+  const totalPrice = itemsTotal + (cart.giftBox?.basePrice || 0);
 
   return (
     <CartContext.Provider

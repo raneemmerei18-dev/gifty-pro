@@ -6,12 +6,12 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-/* ── tiny CSS injected once ── */
+/* ─── injected animation + pill CSS ─── */
 const BB_STYLE = `
 @keyframes bb-fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 @keyframes bb-pulse  { 0%,100%{box-shadow:0 0 0 0 rgba(231,76,60,0.4)} 50%{box-shadow:0 0 0 8px rgba(231,76,60,0)} }
-.bb-card:hover   { border-color:#e74c3c !important; transform:translateY(-2px); box-shadow:0 6px 24px rgba(231,76,60,0.18) !important; }
-.bb-item:hover   { border-color:#e74c3c !important; transform:translateY(-2px); box-shadow:0 4px 16px rgba(231,76,60,0.14) !important; }
+.bb-card:hover  { border-color:#e74c3c !important; transform:translateY(-2px); box-shadow:0 6px 24px rgba(231,76,60,0.18) !important; }
+.bb-item:hover  { border-color:#e74c3c !important; transform:translateY(-2px); box-shadow:0 4px 16px rgba(231,76,60,0.14) !important; }
 .bb-chip-del:hover { background:#e74c3c !important; color:#fff !important; }
 .bb-tab-btn:hover  { opacity:0.85; }
 .bb-pill { cursor:pointer; border:none; border-radius:99px; padding:4px 11px; font-size:0.69rem; font-weight:700; transition:all 0.18s; white-space:nowrap; }
@@ -35,14 +35,13 @@ export default function BoxBuilder() {
   const [loading,      setLoading]      = useState(true);
   const [adding,       setAdding]       = useState(false);
   const [addMsg,       setAddMsg]       = useState("");
-  const [tab,          setTab]          = useState("boxes"); // "boxes" | "items"
+  const [tab,          setTab]          = useState("boxes");
   const [boxFilter,    setBoxFilter]    = useState("all");
   const [itemFilter,   setItemFilter]   = useState("all");
 
-  /* reset filter when switching tabs */
   const handleTabSwitch = (t) => { setTab(t); setBoxFilter("all"); setItemFilter("all"); };
 
-  /* inject animation styles once */
+  /* inject styles once */
   useEffect(() => {
     if (!document.getElementById("bb-injected-style")) {
       const s = document.createElement("style");
@@ -52,7 +51,6 @@ export default function BoxBuilder() {
     }
   }, []);
 
-  // Fetch products from API
   useEffect(() => {
     API.get("/products")
       .then((res) => setProducts(res.data.map((p) => ({ ...p, modelPath: p.modelPath || "", scale: p.scale || 0.05 }))))
@@ -115,17 +113,14 @@ export default function BoxBuilder() {
     muted:   "#6b6b88",
   };
 
-  const allBoxes = giftboxes.length > 0 ? giftboxes : CATALOG_BOXES;
-
-  /* ── filter helpers ── */
   const CATEGORY_ICONS = { graduation:"🎓", wedding:"💍", birthday:"🎂", general:"🛍️" };
   const THEME_ICONS    = { graduation:"🎓", wedding:"💍", birthday:"🎂", general:"📦", luxury:"✨", kids:"🧸" };
 
-  const boxThemes    = ["all", ...new Set(allBoxes.map((b) => b.theme || "general"))];
+  const allBoxes       = giftboxes.length > 0 ? giftboxes : CATALOG_BOXES;
+  const boxThemes      = ["all", ...new Set(allBoxes.map((b) => b.theme || "general"))];
   const itemCategories = ["all", ...new Set(products.map((p) => p.category || "general"))];
-
-  const visibleBoxes = boxFilter  === "all" ? allBoxes  : allBoxes.filter((b) => (b.theme||"general")  === boxFilter);
-  const visibleItems = itemFilter === "all" ? products  : products.filter((p) => (p.category||"general") === itemFilter);
+  const visibleBoxes   = boxFilter  === "all" ? allBoxes : allBoxes.filter((b) => (b.theme    || "general") === boxFilter);
+  const visibleItems   = itemFilter === "all" ? products : products.filter((p) => (p.category || "general") === itemFilter);
 
   return (
     <div style={{ display:"flex", height:"100vh", width:"100vw", background:C.bg, color:C.text, overflow:"hidden", fontFamily:"inherit" }}>
@@ -145,7 +140,6 @@ export default function BoxBuilder() {
           borderBottom:`1px solid ${C.border}`,
           flexShrink:0,
         }}>
-          {/* logo row */}
           <div style={{ display:"flex", alignItems:"center", gap:"10px", marginBottom:"14px" }}>
             <div style={{
               width:38, height:38, borderRadius:10, flexShrink:0,
@@ -162,9 +156,9 @@ export default function BoxBuilder() {
           {/* progress steps */}
           <div style={{ display:"flex", gap:"8px" }}>
             {[
-              { n:"1", label:"Pick Box",   done:!!activeBox },
-              { n:"2", label:"Add Items",  done:itemsInScene.length > 0 },
-              { n:"3", label:"Checkout",   done:addMsg.startsWith("✅") },
+              { n:"1", label:"Pick Box",  done:!!activeBox },
+              { n:"2", label:"Add Items", done:itemsInScene.length > 0 },
+              { n:"3", label:"Checkout",  done:addMsg.startsWith("✅") },
             ].map(({ n, label, done }) => (
               <div key={n} style={{ flex:1 }}>
                 <div style={{
@@ -208,13 +202,13 @@ export default function BoxBuilder() {
         {/* ── Scrollable catalog ── */}
         <div style={{ flex:1, overflowY:"auto", padding:"14px", display:"flex", flexDirection:"column", gap:"10px" }}>
 
+          {/* ══ BOXES TAB ══ */}
           {tab === "boxes" && (
             <>
               <div style={{ fontSize:"0.68rem", color:C.muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.8px", marginBottom:"2px" }}>
                 Drag to place
               </div>
 
-              {/* ── Box theme filter pills ── */}
               {boxThemes.length > 1 && (
                 <div style={{ display:"flex", flexWrap:"wrap", gap:"5px", marginBottom:"2px" }}>
                   {boxThemes.map((t) => (
@@ -223,7 +217,7 @@ export default function BoxBuilder() {
                       color: boxFilter===t ? "#fff" : C.muted,
                       border: boxFilter===t ? "none" : `1px solid ${C.border}`,
                     }}>
-                      {THEME_ICONS[t] || "📦"} {t.charAt(0).toUpperCase()+t.slice(1)}
+                      {THEME_ICONS[t]||"📦"} {t.charAt(0).toUpperCase()+t.slice(1)}
                       <span style={{ marginLeft:"4px", opacity:0.65, fontSize:"0.62rem" }}>
                         {t==="all" ? allBoxes.length : allBoxes.filter((b)=>(b.theme||"general")===t).length}
                       </span>
@@ -270,13 +264,13 @@ export default function BoxBuilder() {
             </>
           )}
 
+          {/* ══ ITEMS TAB ══ */}
           {tab === "items" && (
             <>
               <div style={{ fontSize:"0.68rem", color:C.muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.8px", marginBottom:"2px" }}>
                 Drag into your box
               </div>
 
-              {/* ── Category filter pills ── */}
               {!loading && itemCategories.length > 1 && (
                 <div style={{ display:"flex", flexWrap:"wrap", gap:"5px", marginBottom:"2px" }}>
                   {itemCategories.map((cat) => (
@@ -300,13 +294,9 @@ export default function BoxBuilder() {
                   <div style={{ fontSize:"0.82rem" }}>Loading products…</div>
                 </div>
               ) : products.length === 0 ? (
-                <div style={{ textAlign:"center", padding:"32px 0", color:C.muted, fontSize:"0.82rem" }}>
-                  No products found
-                </div>
+                <div style={{ textAlign:"center", padding:"32px 0", color:C.muted, fontSize:"0.82rem" }}>No products found</div>
               ) : visibleItems.length === 0 ? (
-                <div style={{ textAlign:"center", padding:"24px 0", color:C.muted, fontSize:"0.8rem" }}>
-                  No items in this category
-                </div>
+                <div style={{ textAlign:"center", padding:"24px 0", color:C.muted, fontSize:"0.8rem" }}>No items in this category</div>
               ) : (
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"9px" }}>
                   {visibleItems.map((p) => (
@@ -352,7 +342,7 @@ export default function BoxBuilder() {
           fontSize:"0.7rem", color:"rgba(231,76,60,0.85)",
           flexShrink:0, lineHeight:1.55,
         }}>
-          💡 <b>Step 1:</b> Drag a <b>box</b> onto the stage. <b>Step 2:</b> Drag items inside it. Hit <b>✕</b> in the bar below to remove anything.
+          💡 <b>Step 1:</b> Drag a <b>box</b> onto the stage. <b>Step 2:</b> Drag items inside it. Hit <b>✕</b> below to remove anything.
         </div>
       </div>
 
@@ -371,7 +361,7 @@ export default function BoxBuilder() {
           </div>
         )}
 
-        {/* Subtle top gradient accent */}
+        {/* top accent line */}
         <div style={{
           position:"absolute", top:0, left:0, right:0, height:"3px",
           background:"linear-gradient(90deg,transparent,#e74c3c,#ff7043,transparent)",

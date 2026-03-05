@@ -5,7 +5,7 @@ import { AdminShell } from "./Dashboard";
 export default function ManageBoxes() {
   const [boxes, setBoxes] = useState([]);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ name: "", theme: "", maxItems: "", basePrice: "", image: "", modelPath: "", scale: "0.05" });
+  const [form, setForm] = useState({ name: "", theme: "", maxItems: "", basePrice: "", modelPath: "", scale: "0.05" });
   const [msg, setMsg] = useState({ text: "", type: "" });
   const [uploading, setUploading] = useState(false);
 
@@ -62,7 +62,7 @@ export default function ManageBoxes() {
         await API.post("/giftboxes", data);
         flash("Box type created successfully");
       }
-      setForm({ name: "", theme: "", maxItems: "", basePrice: "", image: "", modelPath: "", scale: "0.05" });
+      setForm({ name: "", theme: "", maxItems: "", basePrice: "", modelPath: "", scale: "0.05" });
       setEditId(null);
       load();
     } catch (err) {
@@ -77,7 +77,6 @@ export default function ManageBoxes() {
       theme: box.theme,
       maxItems: box.maxItems,
       basePrice: box.basePrice,
-      image: box.image || "",
       modelPath: box.modelPath || "",
       scale: String(box.scale || "0.05"),
     });
@@ -98,7 +97,7 @@ export default function ManageBoxes() {
 
   const resetForm = () => {
     setEditId(null);
-    setForm({ name: "", theme: "", maxItems: "", basePrice: "", image: "", modelPath: "", scale: "0.05" });
+    setForm({ name: "", theme: "", maxItems: "", basePrice: "", modelPath: "", scale: "0.05" });
   };
 
   return (
@@ -127,10 +126,6 @@ export default function ManageBoxes() {
               <label>Base Price ($)</label>
               <input name="basePrice" type="number" step="0.01" min="0" value={form.basePrice} onChange={handleChange} required placeholder="0.00" />
             </div>
-          </div>
-          <div className="adm-field">
-            <label>Image URL (optional)</label>
-            <input name="image" value={form.image} onChange={handleChange} placeholder="https://..." />
           </div>
           <div className="adm-field">
             <label>3D Model (.glb file) {uploading && <span style={{ color: "#f39c12" }}>Uploading...</span>}</label>

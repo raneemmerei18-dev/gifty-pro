@@ -6,7 +6,7 @@ export default function ManageProducts() {
   const [products, setProducts] = useState([]);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({
-    name: "", description: "", price: "", image: "", modelPath: "", scale: "0.05", category: "general", stock: "",
+    name: "", description: "", price: "", modelPath: "", scale: "0.05", category: "general", stock: "",
   });
   const [msg, setMsg] = useState({ text: "", type: "" });
   const [uploading, setUploading] = useState(false);
@@ -62,7 +62,7 @@ export default function ManageProducts() {
         await API.post("/products", data);
         flash("Product created successfully");
       }
-      setForm({ name: "", description: "", price: "", image: "", modelPath: "", category: "general", stock: "" });
+      setForm({ name: "", description: "", price: "", modelPath: "", category: "general", stock: "" });
       setEditId(null);
       load();
     } catch (err) {
@@ -74,7 +74,7 @@ export default function ManageProducts() {
     setEditId(p._id);
     setForm({
       name: p.name, description: p.description, price: p.price,
-      image: p.image, modelPath: p.modelPath || "", scale: String(p.scale || "0.05"), category: p.category, stock: p.stock,
+      modelPath: p.modelPath || "", scale: String(p.scale || "0.05"), category: p.category, stock: p.stock,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -102,7 +102,7 @@ export default function ManageProducts() {
 
   const resetForm = () => {
     setEditId(null);
-    setForm({ name: "", description: "", price: "", image: "", modelPath: "", scale: "0.05", category: "general", stock: "" });
+    setForm({ name: "", description: "", price: "", modelPath: "", scale: "0.05", category: "general", stock: "" });
   };
 
   return (
@@ -139,10 +139,6 @@ export default function ManageProducts() {
               <label>Stock</label>
               <input name="stock" type="number" value={form.stock} onChange={handleChange} placeholder="0" />
             </div>
-          </div>
-          <div className="adm-field">
-            <label>Image URL</label>
-            <input name="image" value={form.image} onChange={handleChange} placeholder="https://..." />
           </div>
           <div className="adm-field">
             <label>3D Model (.glb file) {uploading && <span style={{ color: "#f39c12" }}>Uploading...</span>}</label>

@@ -50,7 +50,7 @@ export function CartProvider({ children }) {
   };
 
   const clearCart = async () => {
-    await API.delete("/cart/clear");
+    try { await API.delete("/cart/clear"); } catch {}
     setCart({ items: [], giftBox: null });
   };
 

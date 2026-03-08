@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import API from "../../api/axios";
 import { AdminShell } from "./Dashboard";
 
-const STATUSES = ["pending", "preparing", "shipped", "delivered"];
+const STATUSES = ["pending", "preparing", "shipped", "delivered", "cancelled"];
 const PER_PAGE = 10;
 
 /* Generate a readable order number from MongoDB _id + createdAt */

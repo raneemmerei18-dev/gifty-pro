@@ -66,7 +66,6 @@ export default function BoxBuilder() {
   }, []);
 
   const startDragging = (item, isBox = false, e) => {
-    if (!isBox && !item.modelPath) return;
     setDraggedItem({ ...item, instanceId: Date.now(), isBox, _startX: e?.clientX, _startY: e?.clientY });
   };
 

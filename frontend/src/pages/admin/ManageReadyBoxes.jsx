@@ -117,6 +117,47 @@ export default function ManageReadyBoxes() {
   return (
     <AdminShell title="Ready Boxes" subtitle="Create pre-made gift sets for customers">
       {msg.text && <div className={`adm-flash adm-flash--${msg.type}`}>{msg.text}</div>}
+      {/* Table */}
+      <section className="adm-card">
+        <h3 className="adm-card-title">All Ready Boxes ({readyBoxes.length})</h3>
+        {readyBoxes.length === 0 ? (
+          <p className="muted">No ready boxes created yet.</p>
+        ) : (
+          <div className="adm-table-wrap">
+            <table className="adm-table">
+              <thead>
+                <tr><th>Name</th><th>Box Type</th><th>Items</th><th>Price</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody>
+                {readyBoxes.map((rb) => (
+                  <tr key={rb._id} className={!rb.isActive ? "adm-row-muted" : ""}>
+                    <td className="adm-cell-bold">{rb.name}</td>
+                    <td>{rb.giftBox?.name || "--"}</td>
+                    <td>{rb.items.length}</td>
+                    <td className="adm-money">${rb.totalPrice.toFixed(2)}</td>
+                    <td>
+                      <span className={`adm-badge ${rb.isActive ? "adm-badge--success" : "adm-badge--danger"}`}>
+                        {rb.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td className="adm-actions-cell">
+                      <button className="adm-btn adm-btn--sm adm-btn--ghost" onClick={() => startEdit(rb)}>Edit</button>
+                      <button
+                        className={`adm-btn adm-btn--sm ${rb.isActive ? "adm-btn--warning" : "adm-btn--success"}`}
+                        onClick={() => toggleActive(rb)}
+                      >
+                        {rb.isActive ? "Deactivate" : "Activate"}
+                      </button>
+                      <button className="adm-btn adm-btn--sm adm-btn--danger" onClick={() => handleDelete(rb._id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       {/* Form */}
       <section className="adm-card">
         <h3 className="adm-card-title">{editId ? "Edit Ready Box" : "Create Ready Box"}</h3>
@@ -190,47 +231,6 @@ export default function ManageReadyBoxes() {
             {editId && <button type="button" className="adm-btn adm-btn--ghost" onClick={resetForm}>Cancel</button>}
           </div>
         </form>
-      </section>
-
-      {/* Table */}
-      <section className="adm-card">
-        <h3 className="adm-card-title">All Ready Boxes ({readyBoxes.length})</h3>
-        {readyBoxes.length === 0 ? (
-          <p className="muted">No ready boxes created yet.</p>
-        ) : (
-          <div className="adm-table-wrap">
-            <table className="adm-table">
-              <thead>
-                <tr><th>Name</th><th>Box Type</th><th>Items</th><th>Price</th><th>Status</th><th>Actions</th></tr>
-              </thead>
-              <tbody>
-                {readyBoxes.map((rb) => (
-                  <tr key={rb._id} className={!rb.isActive ? "adm-row-muted" : ""}>
-                    <td className="adm-cell-bold">{rb.name}</td>
-                    <td>{rb.giftBox?.name || "--"}</td>
-                    <td>{rb.items.length}</td>
-                    <td className="adm-money">${rb.totalPrice.toFixed(2)}</td>
-                    <td>
-                      <span className={`adm-badge ${rb.isActive ? "adm-badge--success" : "adm-badge--danger"}`}>
-                        {rb.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="adm-actions-cell">
-                      <button className="adm-btn adm-btn--sm adm-btn--ghost" onClick={() => startEdit(rb)}>Edit</button>
-                      <button
-                        className={`adm-btn adm-btn--sm ${rb.isActive ? "adm-btn--warning" : "adm-btn--success"}`}
-                        onClick={() => toggleActive(rb)}
-                      >
-                        {rb.isActive ? "Deactivate" : "Activate"}
-                      </button>
-                      <button className="adm-btn adm-btn--sm adm-btn--danger" onClick={() => handleDelete(rb._id)}>Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </section>
     </AdminShell>
   );

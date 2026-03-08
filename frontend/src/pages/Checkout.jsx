@@ -53,6 +53,7 @@ export default function Checkout() {
     setError("");
     try {
       await API.post("/orders", { delivery });
+      await clearCart();
       setSuccess(true);
     } catch (err) {
       setError(err.response?.data?.error || "Checkout failed");

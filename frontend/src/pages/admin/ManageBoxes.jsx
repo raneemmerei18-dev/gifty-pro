@@ -103,6 +103,37 @@ export default function ManageBoxes() {
   return (
     <AdminShell title="Box Types" subtitle="Add and configure gift box sizes and themes">
       {msg.text && <div className={`adm-flash adm-flash--${msg.type}`}>{msg.text}</div>}
+      {/* Table */}
+      <section className="adm-card">
+        <h3 className="adm-card-title">All Box Types ({boxes.length})</h3>
+        {boxes.length === 0 ? (
+          <p className="muted">No box types added yet.</p>
+        ) : (
+          <div className="adm-table-wrap">
+            <table className="adm-table">
+              <thead>
+                <tr><th>Name</th><th>Theme</th><th>Max Items</th><th>Base Price</th><th>Model</th><th>Actions</th></tr>
+              </thead>
+              <tbody>
+                {boxes.map((box) => (
+                  <tr key={box._id}>
+                    <td className="adm-cell-bold">{box.name}</td>
+                    <td>{box.theme}</td>
+                    <td>{box.maxItems}</td>
+                    <td className="adm-money">${box.basePrice.toFixed(2)}</td>
+                    <td>{box.modelPath ? "\u2714" : ""}</td>
+                    <td className="adm-actions-cell">
+                      <button className="adm-btn adm-btn--sm adm-btn--ghost" onClick={() => startEdit(box)}>Edit</button>
+                      <button className="adm-btn adm-btn--sm adm-btn--danger" onClick={() => handleDelete(box._id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       {/* Form */}
       <section className="adm-card">
         <h3 className="adm-card-title">{editId ? "Edit Box Type" : "Add New Box Type"}</h3>
@@ -151,37 +182,6 @@ export default function ManageBoxes() {
             {editId && <button type="button" className="adm-btn adm-btn--ghost" onClick={resetForm}>Cancel</button>}
           </div>
         </form>
-      </section>
-
-      {/* Table */}
-      <section className="adm-card">
-        <h3 className="adm-card-title">All Box Types ({boxes.length})</h3>
-        {boxes.length === 0 ? (
-          <p className="muted">No box types added yet.</p>
-        ) : (
-          <div className="adm-table-wrap">
-            <table className="adm-table">
-              <thead>
-                <tr><th>Name</th><th>Theme</th><th>Max Items</th><th>Base Price</th><th>Model</th><th>Actions</th></tr>
-              </thead>
-              <tbody>
-                {boxes.map((box) => (
-                  <tr key={box._id}>
-                    <td className="adm-cell-bold">{box.name}</td>
-                    <td>{box.theme}</td>
-                    <td>{box.maxItems}</td>
-                    <td className="adm-money">${box.basePrice.toFixed(2)}</td>
-                    <td>{box.modelPath ? "✔" : ""}</td>
-                    <td className="adm-actions-cell">
-                      <button className="adm-btn adm-btn--sm adm-btn--ghost" onClick={() => startEdit(box)}>Edit</button>
-                      <button className="adm-btn adm-btn--sm adm-btn--danger" onClick={() => handleDelete(box._id)}>Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </section>
     </AdminShell>
   );

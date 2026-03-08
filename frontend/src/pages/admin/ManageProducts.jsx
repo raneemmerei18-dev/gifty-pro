@@ -108,6 +108,54 @@ export default function ManageProducts() {
   return (
     <AdminShell title="Products" subtitle={`${products.length} products total`}>
       {msg.text && <div className={`adm-flash adm-flash--${msg.type}`}>{msg.text}</div>}
+      {/* Table */}
+      <section className="adm-card">
+        <h3 className="adm-card-title">All Products</h3>
+        {products.length === 0 ? (
+          <p className="muted">No products yet.</p>
+        ) : (
+          <div className="adm-table-wrap">
+            <table className="adm-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((p) => (
+                  <tr key={p._id} className={!p.isActive ? "adm-row-muted" : ""}>
+                    <td className="adm-cell-bold">{p.name}</td>
+                    <td>{p.category}</td>
+                    <td className="adm-money">${Number(p.price).toFixed(2)}</td>
+                    <td>{p.stock}</td>
+                    <td>
+                      <span className={`adm-badge ${p.isActive ? "adm-badge--success" : "adm-badge--danger"}`}>
+                        {p.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td className="adm-actions-cell">
+                      <button className="adm-btn adm-btn--sm adm-btn--ghost" onClick={() => startEdit(p)}>Edit</button>
+                      <button
+                        className={`adm-btn adm-btn--sm ${p.isActive ? "adm-btn--warning" : "adm-btn--success"}`}
+                        onClick={() => toggleActive(p._id)}
+                      >
+                        {p.isActive ? "Deactivate" : "Activate"}
+                      </button>
+                      <button className="adm-btn adm-btn--sm adm-btn--danger" onClick={() => handleDelete(p._id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       {/* Form */}
       <section className="adm-card">
         <h3 className="adm-card-title">{editId ? "Edit Product" : "Add New Product"}</h3>
@@ -168,54 +216,6 @@ export default function ManageProducts() {
             )}
           </div>
         </form>
-      </section>
-
-      {/* Table */}
-      <section className="adm-card">
-        <h3 className="adm-card-title">All Products</h3>
-        {products.length === 0 ? (
-          <p className="muted">No products yet.</p>
-        ) : (
-          <div className="adm-table-wrap">
-            <table className="adm-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Price</th>
-                  <th>Stock</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.map((p) => (
-                  <tr key={p._id} className={!p.isActive ? "adm-row-muted" : ""}>
-                    <td className="adm-cell-bold">{p.name}</td>
-                    <td>{p.category}</td>
-                    <td className="adm-money">${Number(p.price).toFixed(2)}</td>
-                    <td>{p.stock}</td>
-                    <td>
-                      <span className={`adm-badge ${p.isActive ? "adm-badge--success" : "adm-badge--danger"}`}>
-                        {p.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="adm-actions-cell">
-                      <button className="adm-btn adm-btn--sm adm-btn--ghost" onClick={() => startEdit(p)}>Edit</button>
-                      <button
-                        className={`adm-btn adm-btn--sm ${p.isActive ? "adm-btn--warning" : "adm-btn--success"}`}
-                        onClick={() => toggleActive(p._id)}
-                      >
-                        {p.isActive ? "Deactivate" : "Activate"}
-                      </button>
-                      <button className="adm-btn adm-btn--sm adm-btn--danger" onClick={() => handleDelete(p._id)}>Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </section>
     </AdminShell>
   );

@@ -37,9 +37,18 @@ import adminRoutes    from "./routes/adminRoutes.js";
 
 // ─── Configuration ──────────────────────────────────────
 // Load .env FIRST so all process.env.* values are available
-dotenv.config();
+// the .env file is stored at the project root, not inside /server, so we
+// resolve the path explicitly. Without this the config() call would silently
+// inject zero variables and `process.env.MONGO_URL` would be undefined.
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+
 const app  = express();
 const PORT = process.env.PORT || 8000;
+
+// sanity check for environment variables early in startup
+if (!process.env.MONGO_URL) {
+  console.warn("⚠️  WARNING: MONGO_URL is not defined. Make sure .env is present at the project root or adjust dotenv.config path.");
+}
 
 // ─── Middleware ─────────────────────────────────────────
 app.use(cors());           // Allow the React frontend (port 5173) to call this server

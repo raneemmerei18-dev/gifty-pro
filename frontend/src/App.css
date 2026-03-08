@@ -1069,11 +1069,12 @@ input::placeholder {
 }
 
 .status-badge {
-  color: white;
+  color: rgb(213, 0, 0);
   padding: 0.3rem 0.9rem;
   border-radius: var(--radius-full);
   font-size: 0.72rem;
   font-weight: 700;
+  background-color: #131512;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }

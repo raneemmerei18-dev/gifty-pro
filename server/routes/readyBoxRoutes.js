@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { verifyToken, adminOnly } from "../middleware/auth.js";
+import { uploadImage } from "../middleware/upload.js";
 import {
   getReadyBoxes,
   getAllReadyBoxes,
@@ -11,11 +12,21 @@ import {
 
 const router = Router();
 
-router.get("/",        getReadyBoxes);                          // public
-router.get("/all",     verifyToken, adminOnly, getAllReadyBoxes); // admin
-router.get("/:id",     getReadyBox);                             // public
-router.post("/",       verifyToken, adminOnly, createReadyBox);  // admin
-router.put("/:id",     verifyToken, adminOnly, updateReadyBox);  // admin
-router.delete("/:id",  verifyToken, adminOnly, deleteReadyBox);  // admin
+router.get("/",        getReadyBoxes);
+router.get("/all",     verifyToken, adminOnly, getAllReadyBoxes);
+router.get("/:id",     getReadyBox);
+
+// image upload (admin)
+router.post("/upload-image", verifyToken, adminOnly, (req, res) => {
+  uploadImage.single("image")(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message || "Upload failed" });
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    res.json({ imagePath: "/images/" + req.file.filename });
+  });
+});
+
+router.post("/",       verifyToken, adminOnly, createReadyBox);
+router.put("/:id",     verifyToken, adminOnly, updateReadyBox);
+router.delete("/:id",  verifyToken, adminOnly, deleteReadyBox);
 
 export default router;

@@ -10,6 +10,7 @@ export default function ManageReadyBoxes() {
   const [form, setForm] = useState({ name: "", description: "", giftBox: "", image: "" });
   const [selectedItems, setSelectedItems] = useState([]);
   const [msg, setMsg] = useState({ text: "", type: "" });
+  const [imageUploading, setImageUploading] = useState(false);
 
   const flash = (text, type = "success") => {
     setMsg({ text, type });
@@ -24,6 +25,26 @@ export default function ManageReadyBoxes() {
   useEffect(() => { load(); }, []);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageUploading(true);
+    const fd = new FormData();
+    fd.append("image", file);
+    try {
+      const res = await API.post("/readyboxes/upload-image", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setForm((prev) => ({ ...prev, image: res.data.imagePath }));
+      flash("Image uploaded successfully");
+    } catch (err) {
+      flash(err.response?.data?.error || "Image upload failed", "error");
+    } finally {
+      setImageUploading(false);
+      e.target.value = "";
+    }
+  };
 
   const addItemToSelection = (productId) => {
     const existing = selectedItems.find((i) => i.product === productId);
@@ -182,8 +203,41 @@ export default function ManageReadyBoxes() {
             <input name="description" value={form.description} onChange={handleChange} placeholder="Short description" />
           </div>
           <div className="adm-field">
-            <label>Image URL (optional)</label>
-            <input name="image" value={form.image} onChange={handleChange} placeholder="https://..." />
+            <label>Image</label>
+            {form.image && (
+              <img
+                src={form.image.startsWith("/") ? `http://localhost:8000${form.image}` : form.image}
+                alt="preview"
+                style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8, marginBottom: 6, display: "block", border: "1px solid #ddd" }}
+              />
+            )}
+            <label
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "8px 16px", borderRadius: 8, cursor: "pointer",
+                background: imageUploading ? "#ccc" : "var(--primary, #e74c3c)",
+                color: "#fff", fontWeight: 600, fontSize: "0.85rem",
+                pointerEvents: imageUploading ? "none" : "auto",
+              }}
+            >
+              {imageUploading ? "Uploading…" : "📷 Choose Image"}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                style={{ display: "none" }}
+                disabled={imageUploading}
+              />
+            </label>
+            {form.image && (
+              <button
+                type="button"
+                onClick={() => setForm((prev) => ({ ...prev, image: "" }))}
+                style={{ marginLeft: 8, background: "none", border: "none", color: "#e74c3c", cursor: "pointer", fontSize: "0.8rem" }}
+              >
+                ✕ Remove
+              </button>
+            )}
           </div>
 
           {/* Item selector */}

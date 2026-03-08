@@ -30,3 +30,27 @@ export const upload = multer({
   fileFilter,
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max
 });
+
+// ─── Image upload (jpg/png/gif/webp) ────────────────────
+const imgStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, "../public/images"));
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+const imgFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only image files are allowed"));
+  }
+};
+
+export const uploadImage = multer({
+  storage: imgStorage,
+  fileFilter: imgFilter,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+});

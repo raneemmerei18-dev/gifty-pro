@@ -23,13 +23,18 @@ router.get("/", getProducts);
 router.get("/all", verifyToken, adminOnly, getAllProducts);
 router.get("/:id", getProduct);
 router.post("/", verifyToken, adminOnly, createProduct);
-router.post("/upload", verifyToken, adminOnly, upload.single("model"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No file uploaded" });
-  }
-  // Return the path relative to public folder
-  const modelPath = `/models/${req.file.filename}`;
-  res.json({ modelPath });
+router.post("/upload", verifyToken, adminOnly, (req, res, next) => {
+  const singleUpload = upload.single("model");
+  singleUpload(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message || "Upload failed" });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+    const modelPath = `/models/${req.file.filename}`;
+    res.json({ modelPath });
+  });
 });
 router.put("/:id", verifyToken, adminOnly, updateProduct);
 router.patch("/:id/toggle", verifyToken, adminOnly, toggleProduct);

@@ -2479,6 +2479,64 @@ input::placeholder {
 }
 .checkout-submit:hover { background: #c0392b; transform: translateY(-1px); box-shadow: var(--shadow); }
 
+/* Delivery estimate badge */
+.delivery-estimate {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* City select styling */
+.checkout-form-grid select {
+  width: 100%;
+  padding: 0.65rem 0.8rem;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: var(--bg);
+  color: var(--text);
+  transition: border-color 0.2s;
+  appearance: none;
+  cursor: pointer;
+}
+.checkout-form-grid select:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+/* Payment partner logos */
+.payment-partners {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 0 0.2rem;
+}
+.pp-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+.pp-logos {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.pp-logo {
+  opacity: 0.8;
+  transition: opacity 0.2s;
+  border-radius: 3px;
+}
+.pp-logo:hover {
+  opacity: 1;
+}
+
 /* Trust badges */
 .checkout-trust {
   grid-column: 1 / -1;

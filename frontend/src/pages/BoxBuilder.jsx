@@ -16,6 +16,10 @@ const BB_STYLE = `
 .bb-tab-btn:hover  { opacity:0.85; }
 .bb-pill { cursor:pointer; border:none; border-radius:99px; padding:4px 11px; font-size:0.69rem; font-weight:700; transition:all 0.18s; white-space:nowrap; }
 .bb-pill:hover { filter:brightness(1.15); }
+.bb-rot-btn:hover { filter:brightness(1.3); transform:scale(1.08); }
+.bb-ctrl-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; border:none; border-radius:12px; cursor:pointer; transition:all 0.18s; font-family:inherit; }
+.bb-ctrl-btn:hover { transform:translateY(-2px); filter:brightness(1.2); box-shadow:0 4px 16px rgba(0,0,0,0.3); }
+.bb-ctrl-btn:active { transform:scale(0.95); }
 `;
 
 const CATALOG_BOXES = [
@@ -38,8 +42,33 @@ export default function BoxBuilder() {
   const [tab,          setTab]          = useState("boxes");
   const [boxFilter,    setBoxFilter]    = useState("all");
   const [itemFilter,   setItemFilter]   = useState("all");
+  const [selectedItemId, setSelectedItemId] = useState(null);
 
   const handleTabSwitch = (t) => { setTab(t); setBoxFilter("all"); setItemFilter("all"); };
+
+  /* keyboard shortcuts for rotation */
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (!selectedItemId) return;
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+      switch (e.key) {
+        case "q": case "Q": handleRotateItem(selectedItemId, "y", 1); break;
+        case "e": case "E": handleRotateItem(selectedItemId, "y", -1); break;
+        case "w": case "W": handleRotateItem(selectedItemId, "x", 1); break;
+        case "s": case "S": handleRotateItem(selectedItemId, "x", -1); break;
+        case "Escape": setSelectedItemId(null); break;
+        case "Delete": case "Backspace":
+          if (activeBox && (activeBox.instanceId === selectedItemId || activeBox._id === selectedItemId)) {
+            removeBox();
+          } else {
+            removeItem(selectedItemId);
+          }
+          break;
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [selectedItemId]);
 
   /* inject styles once */
   useEffect(() => {
@@ -75,8 +104,35 @@ export default function BoxBuilder() {
     setDraggedItem(item);
   };
 
-  const removeBox  = () => setActiveBox(null);
-  const removeItem = (instanceId) => setItemsInScene((p) => p.filter((it) => it.instanceId !== instanceId));
+  const removeBox  = () => { setActiveBox(null); setSelectedItemId(null); };
+  const removeItem = (instanceId) => { setItemsInScene((p) => p.filter((it) => it.instanceId !== instanceId)); if (selectedItemId === instanceId) setSelectedItemId(null); };
+
+  const handleRotateItem = (itemId, axis, dir) => {
+    const step = (Math.PI / 8) * dir; // 22.5 degrees per click
+    // Check if it's the active box
+    if (activeBox && (activeBox.instanceId === itemId || activeBox._id === itemId)) {
+      const rot = [...(activeBox.rotation || [0, 0, 0])];
+      if (axis === "y") rot[1] += step;
+      else if (axis === "x") rot[0] += step;
+      else rot[2] += step;
+      setActiveBox({ ...activeBox, rotation: rot });
+      return;
+    }
+    // Otherwise it's a scene item
+    setItemsInScene(prev => prev.map(it => {
+      if (it.instanceId !== itemId) return it;
+      const rot = [...(it.rotation || [0, 0, 0])];
+      if (axis === "y") rot[1] += step;
+      else if (axis === "x") rot[0] += step;
+      else rot[2] += step;
+      return { ...it, rotation: rot };
+    }));
+  };
+
+  const selectedItem = selectedItemId
+    ? itemsInScene.find(it => it.instanceId === selectedItemId)
+      || (activeBox && (activeBox.instanceId === selectedItemId || activeBox._id === selectedItemId) ? activeBox : null)
+    : null;
 
   const boxPrice   = activeBox?.basePrice || 0;
   const itemsTotal = itemsInScene.reduce((s, it) => s + (it.price || 0), 0);
@@ -331,18 +387,104 @@ export default function BoxBuilder() {
           )}
         </div>
 
-        {/* ── Tip ── */}
-        <div style={{
-          margin:"0 14px 14px",
-          padding:"9px 12px",
-          background:"rgba(231,76,60,0.07)",
-          borderRadius:10,
-          border:"1px solid rgba(231,76,60,0.18)",
-          fontSize:"0.7rem", color:"rgba(231,76,60,0.85)",
-          flexShrink:0, lineHeight:1.55,
-        }}>
-          💡 <b>Step 1:</b> Drag a <b>box</b> onto the stage. <b>Step 2:</b> Drag items inside it. Hit <b>✕</b> below to remove anything.
-        </div>
+        {/* ── Sidebar Item Controls ── */}
+        {selectedItem ? (
+          <div style={{
+            margin:"0 14px 14px",
+            padding:"14px",
+            background:"linear-gradient(135deg,rgba(72,219,251,0.1),rgba(72,219,251,0.04))",
+            borderRadius:14,
+            border:"1.5px solid rgba(72,219,251,0.3)",
+            flexShrink:0,
+          }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+              <div style={{ fontSize:"0.78rem", color:"#48dbfb", fontWeight:800 }}>
+                🎯 {selectedItem.name || "Box"}
+              </div>
+              <button onClick={() => setSelectedItemId(null)} style={{
+                width:22, height:22, borderRadius:6, border:"1px solid rgba(231,76,60,0.3)",
+                background:"rgba(231,76,60,0.1)", color:"#e74c3c", cursor:"pointer",
+                fontSize:"0.65rem", fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center",
+                transition:"all 0.15s",
+              }}>✕</button>
+            </div>
+
+            {/* Rotate row */}
+            <div style={{ fontSize:"0.6rem", color:C.muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:5 }}>Rotate</div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom:10 }}>
+              <button onClick={() => handleRotateItem(selectedItemId, "y", 1)} className="bb-ctrl-btn" style={{
+                padding:"8px", background:"rgba(72,219,251,0.12)", color:"#48dbfb",
+                border:"1px solid rgba(72,219,251,0.3)", borderRadius:10,
+              }}>
+                <span style={{ fontSize:"1.1rem" }}>↺</span>
+                <span style={{ fontSize:"0.65rem", fontWeight:700 }}>Left (Q)</span>
+              </button>
+              <button onClick={() => handleRotateItem(selectedItemId, "y", -1)} className="bb-ctrl-btn" style={{
+                padding:"8px", background:"rgba(72,219,251,0.12)", color:"#48dbfb",
+                border:"1px solid rgba(72,219,251,0.3)", borderRadius:10,
+              }}>
+                <span style={{ fontSize:"1.1rem" }}>↻</span>
+                <span style={{ fontSize:"0.65rem", fontWeight:700 }}>Right (E)</span>
+              </button>
+            </div>
+
+            {/* Tilt row */}
+            <div style={{ fontSize:"0.6rem", color:C.muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:5 }}>Tilt</div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom:10 }}>
+              <button onClick={() => handleRotateItem(selectedItemId, "x", 1)} className="bb-ctrl-btn" style={{
+                padding:"8px", background:"rgba(255,255,255,0.04)", color:"#aaa",
+                border:"1px solid rgba(255,255,255,0.1)", borderRadius:10,
+              }}>
+                <span style={{ fontSize:"1.1rem" }}>⤴</span>
+                <span style={{ fontSize:"0.65rem", fontWeight:700 }}>Forward (W)</span>
+              </button>
+              <button onClick={() => handleRotateItem(selectedItemId, "x", -1)} className="bb-ctrl-btn" style={{
+                padding:"8px", background:"rgba(255,255,255,0.04)", color:"#aaa",
+                border:"1px solid rgba(255,255,255,0.1)", borderRadius:10,
+              }}>
+                <span style={{ fontSize:"1.1rem" }}>⤵</span>
+                <span style={{ fontSize:"0.65rem", fontWeight:700 }}>Back (S)</span>
+              </button>
+            </div>
+
+            {/* Delete */}
+            <button onClick={() => {
+              if (activeBox && (activeBox.instanceId === selectedItemId || activeBox._id === selectedItemId)) removeBox();
+              else removeItem(selectedItemId);
+            }} className="bb-ctrl-btn" style={{
+              width:"100%", padding:"8px", background:"rgba(231,76,60,0.08)", color:"#e74c3c",
+              border:"1px solid rgba(231,76,60,0.2)", borderRadius:10, flexDirection:"row", gap:6,
+            }}>
+              <span style={{ fontSize:"0.9rem" }}>🗑</span>
+              <span style={{ fontSize:"0.72rem", fontWeight:700 }}>Remove Item (Del)</span>
+            </button>
+          </div>
+        ) : (
+          <div style={{
+            margin:"0 14px 14px",
+            padding:"12px",
+            background:"rgba(231,76,60,0.06)",
+            borderRadius:12,
+            border:"1px solid rgba(231,76,60,0.15)",
+            flexShrink:0,
+          }}>
+            <div style={{ fontSize:"0.68rem", fontWeight:700, color:"rgba(231,76,60,0.9)", marginBottom:6 }}>💡 How to use</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+              <div style={{ fontSize:"0.68rem", color:"rgba(255,255,255,0.5)", display:"flex", alignItems:"center", gap:6 }}>
+                <span style={{ width:20, textAlign:"center" }}>👆</span> Click an item to select & rotate
+              </div>
+              <div style={{ fontSize:"0.68rem", color:"rgba(255,255,255,0.5)", display:"flex", alignItems:"center", gap:6 }}>
+                <span style={{ width:20, textAlign:"center" }}>✊</span> Drag to move items around
+              </div>
+              <div style={{ fontSize:"0.68rem", color:"rgba(255,255,255,0.5)", display:"flex", alignItems:"center", gap:6 }}>
+                <span style={{ width:20, textAlign:"center" }}>🔍</span> Scroll to zoom in/out
+              </div>
+              <div style={{ fontSize:"0.68rem", color:"rgba(255,255,255,0.5)", display:"flex", alignItems:"center", gap:6 }}>
+                <span style={{ width:20, textAlign:"center" }}>🖱</span> Right-click drag to orbit
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ════════════════════════ MAIN AREA ════════════════════════ */}
@@ -367,6 +509,112 @@ export default function BoxBuilder() {
           zIndex:6, pointerEvents:"none",
         }} />
 
+        {/* ─── FLOATING ITEM CONTROL PANEL ─── */}
+        {selectedItem && (
+          <div style={{
+            position:"absolute", bottom:90, left:"50%", transform:"translateX(-50%)",
+            zIndex:10,
+            background:"rgba(10,10,18,0.95)", backdropFilter:"blur(20px)",
+            borderRadius:18, padding:"16px 24px 14px",
+            border:"1px solid rgba(72,219,251,0.25)",
+            boxShadow:"0 8px 40px rgba(0,0,0,0.6)",
+            animation:"bb-fadeIn 0.25s both",
+            minWidth:360,
+          }}>
+            {/* Header */}
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <div style={{ width:28, height:28, borderRadius:8, background:"linear-gradient(135deg,#48dbfb,#0abde3)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"0.85rem" }}>🎯</div>
+                <div>
+                  <div style={{ fontSize:"0.82rem", fontWeight:800, color:"#fff" }}>{selectedItem.name || "Gift Box"}</div>
+                  <div style={{ fontSize:"0.62rem", color:"rgba(255,255,255,0.4)" }}>Click buttons to transform</div>
+                </div>
+              </div>
+              <button onClick={() => setSelectedItemId(null)} className="bb-ctrl-btn" style={{
+                width:30, height:30, borderRadius:8, background:"rgba(231,76,60,0.15)",
+                color:"#e74c3c", fontSize:"0.9rem", fontWeight:800,
+                border:"1px solid rgba(231,76,60,0.3)",
+              }}>✕</button>
+            </div>
+
+            {/* Control buttons row */}
+            <div style={{ display:"flex", gap:8, justifyContent:"center" }}>
+              <button onClick={() => handleRotateItem(selectedItemId, "y", 1)} className="bb-ctrl-btn" style={{
+                flex:1, padding:"10px 6px", background:"rgba(72,219,251,0.12)",
+                border:"1px solid rgba(72,219,251,0.3)", color:"#48dbfb",
+              }}>
+                <span style={{ fontSize:"1.3rem" }}>↺</span>
+                <span style={{ fontSize:"0.65rem", fontWeight:700 }}>Left</span>
+                <span style={{ fontSize:"0.55rem", opacity:0.5 }}>Q</span>
+              </button>
+              <button onClick={() => handleRotateItem(selectedItemId, "y", -1)} className="bb-ctrl-btn" style={{
+                flex:1, padding:"10px 6px", background:"rgba(72,219,251,0.12)",
+                border:"1px solid rgba(72,219,251,0.3)", color:"#48dbfb",
+              }}>
+                <span style={{ fontSize:"1.3rem" }}>↻</span>
+                <span style={{ fontSize:"0.65rem", fontWeight:700 }}>Right</span>
+                <span style={{ fontSize:"0.55rem", opacity:0.5 }}>E</span>
+              </button>
+
+              <div style={{ width:1, background:"rgba(255,255,255,0.08)", margin:"4px 0" }} />
+
+              <button onClick={() => handleRotateItem(selectedItemId, "x", 1)} className="bb-ctrl-btn" style={{
+                flex:1, padding:"10px 6px", background:"rgba(255,255,255,0.04)",
+                border:"1px solid rgba(255,255,255,0.1)", color:"#aaa",
+              }}>
+                <span style={{ fontSize:"1.3rem" }}>⤴</span>
+                <span style={{ fontSize:"0.65rem", fontWeight:700 }}>Tilt Fwd</span>
+                <span style={{ fontSize:"0.55rem", opacity:0.5 }}>W</span>
+              </button>
+              <button onClick={() => handleRotateItem(selectedItemId, "x", -1)} className="bb-ctrl-btn" style={{
+                flex:1, padding:"10px 6px", background:"rgba(255,255,255,0.04)",
+                border:"1px solid rgba(255,255,255,0.1)", color:"#aaa",
+              }}>
+                <span style={{ fontSize:"1.3rem" }}>⤵</span>
+                <span style={{ fontSize:"0.65rem", fontWeight:700 }}>Tilt Back</span>
+                <span style={{ fontSize:"0.55rem", opacity:0.5 }}>S</span>
+              </button>
+
+              <div style={{ width:1, background:"rgba(255,255,255,0.08)", margin:"4px 0" }} />
+
+              <button onClick={() => {
+                if (activeBox && (activeBox.instanceId === selectedItemId || activeBox._id === selectedItemId)) removeBox();
+                else removeItem(selectedItemId);
+              }} className="bb-ctrl-btn" style={{
+                padding:"10px 14px", background:"rgba(231,76,60,0.1)",
+                border:"1px solid rgba(231,76,60,0.25)", color:"#e74c3c",
+              }}>
+                <span style={{ fontSize:"1.3rem" }}>🗑</span>
+                <span style={{ fontSize:"0.65rem", fontWeight:700 }}>Delete</span>
+                <span style={{ fontSize:"0.55rem", opacity:0.5 }}>Del</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ─── HELP BAR (always visible when no item selected) ─── */}
+        {!selectedItem && (activeBox || itemsInScene.length > 0) && (
+          <div style={{
+            position:"absolute", bottom:90, left:"50%", transform:"translateX(-50%)",
+            zIndex:8,
+            background:"rgba(10,10,18,0.85)", backdropFilter:"blur(12px)",
+            borderRadius:12, padding:"10px 20px",
+            border:"1px solid rgba(255,255,255,0.08)",
+            display:"flex", gap:20, alignItems:"center",
+            animation:"bb-fadeIn 0.3s both",
+          }}>
+            <span style={{ fontSize:"0.75rem", color:"rgba(255,255,255,0.5)", display:"flex", alignItems:"center", gap:6 }}>
+              <span style={{ fontSize:"1rem" }}>👆</span> Click item to select & rotate
+            </span>
+            <span style={{ fontSize:"0.75rem", color:"rgba(255,255,255,0.5)", display:"flex", alignItems:"center", gap:6 }}>
+              <span style={{ fontSize:"1rem" }}>✊</span> Drag item to move
+            </span>
+            <span style={{ fontSize:"0.75rem", color:"rgba(255,255,255,0.5)", display:"flex", alignItems:"center", gap:6 }}>
+              <span style={{ fontSize:"1rem" }}>🔍</span> Scroll to zoom
+            </span>
+          </div>
+        )}
+
         {/* 3-D Scene */}
         <div style={{ flex:1, cursor: draggedItem ? "grabbing" : "default" }}>
           <BoxScene
@@ -377,6 +625,9 @@ export default function BoxBuilder() {
             draggedItem={draggedItem}
             setDraggedItem={setDraggedItem}
             onGrab={grabExisting}
+            selectedItemId={selectedItemId}
+            onSelectItem={setSelectedItemId}
+            onRotateItem={handleRotateItem}
           />
         </div>
 

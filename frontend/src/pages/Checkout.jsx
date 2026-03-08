@@ -3,10 +3,31 @@
  * The card mockup updates live as the user types.
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
+
+/* city → delivery days mapping (Lebanon) */
+const CITY_DAYS = {
+  saida: 1,
+  beirut: 3,
+  tyre: 2,
+  zahle: 3,
+  tripoli: 4,
+  akkar: 4,
+  baalbek: 4,
+};
+const CITIES = Object.keys(CITY_DAYS);
+
+/* given a city, return the delivery date string (YYYY-MM-DD) */
+const getDeliveryDate = (city) => {
+  const days = CITY_DAYS[city.toLowerCase()];
+  if (!days) return "";
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split("T")[0];
+};
 
 /* format card number with spaces every 4 digits */
 const fmtCard = (v) =>
@@ -37,8 +58,18 @@ export default function Checkout() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  const handleDelivery = (e) =>
-    setDelivery({ ...delivery, [e.target.name]: e.target.value });
+  const handleDelivery = (e) => {
+    const { name, value } = e.target;
+    if (name === "city") {
+      const date = getDeliveryDate(value);
+      setDelivery({ ...delivery, city: value, date });
+    } else {
+      setDelivery({ ...delivery, [name]: value });
+    }
+  };
+
+  /* human-readable delivery estimate */
+  const deliveryDays = CITY_DAYS[delivery.city.toLowerCase()] || null;
 
   const handleCard = (e) => {
     const { name, value } = e.target;
@@ -208,13 +239,24 @@ export default function Checkout() {
               </div>
               <div className="field-group">
                 <label>City</label>
-                <input name="city" placeholder="New York"
-                  value={delivery.city} onChange={handleDelivery} required />
+                <select name="city" value={delivery.city} onChange={handleDelivery} required>
+                  <option value="">Select city…</option>
+                  {CITIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c.charAt(0).toUpperCase() + c.slice(1)}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="field-group">
                 <label>Delivery Date</label>
                 <input name="date" type="date"
-                  value={delivery.date} onChange={handleDelivery} />
+                  value={delivery.date} readOnly />
+                {deliveryDays && (
+                  <span className="delivery-estimate">
+                    Estimated {deliveryDays} day{deliveryDays > 1 ? "s" : ""} delivery
+                  </span>
+                )}
               </div>
               <div className="field-group full-width">
                 <label>Full Address</label>
@@ -242,6 +284,17 @@ export default function Checkout() {
             <button type="submit" className="btn btn-primary btn-lg checkout-submit">
               {payMethod === "card" ? "💳 Pay Now" : "🚚 Place Order (COD)"}  ·  ${totalPrice.toFixed(2)}
             </button>
+
+            {/* Payment partner logos */}
+            <div className="payment-partners">
+              <span className="pp-label">We accept</span>
+              <div className="pp-logos">
+                <svg className="pp-logo" viewBox="0 0 60 20" width="60" height="20"><rect rx="3" width="60" height="20" fill="#635BFF"/><text x="30" y="14" textAnchor="middle" fill="#fff" fontSize="10" fontWeight="700" fontFamily="sans-serif">Stripe</text></svg>
+                <svg className="pp-logo" viewBox="0 0 70 20" width="70" height="20"><rect rx="3" width="70" height="20" fill="#003087"/><text x="35" y="14" textAnchor="middle" fill="#fff" fontSize="9" fontWeight="700" fontFamily="sans-serif">PayPal</text></svg>
+                <svg className="pp-logo" viewBox="0 0 60 20" width="60" height="20"><rect rx="3" width="60" height="20" fill="#1A1F71"/><text x="30" y="14" textAnchor="middle" fill="#fff" fontSize="10" fontWeight="700" fontFamily="sans-serif">VISA</text></svg>
+                <svg className="pp-logo" viewBox="0 0 80 20" width="80" height="20"><rect rx="3" width="80" height="20" fill="#EB001B"/><text x="40" y="14" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="700" fontFamily="sans-serif">Mastercard</text></svg>
+              </div>
+            </div>
 
             <div className="checkout-trust">
               <span>🔒 256-bit SSL Encryption</span>
